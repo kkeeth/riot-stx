@@ -1,4 +1,4 @@
-riotStx = {
+const riotStx = {
 	useStxLocal:false,
 	optionsState(useStxLocal){
 		this.useStxLocal=useStxLocal
@@ -94,3 +94,4 @@ riotStx = {
 		Object.assign(state,ext)
 	}
 }
+export default riotStx
