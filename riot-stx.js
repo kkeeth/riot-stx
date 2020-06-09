@@ -1,13 +1,16 @@
+import { install } from 'riot'
+
 const riotStx = {
+        state: {},
 	useStxLocal:false,
-	optionsState(useStxLocal){
+	optionsState(useStxLocal) {
 		this.useStxLocal=useStxLocal
 	},
 	
-	initState(...initStateObjs){
-		let me=this
-		//create a handler on set operation on global state
-		state = new Proxy({}, {
+	initState(...initStateObjs) {
+		let me = this
+		// create a handler on set operation on global state
+		this.state = new Proxy({}, {
 			set: function (target, key, value) {
 				if(key[0] != '_' && JSON.stringify(target[key] || null) !== JSON.stringify(value)) {
 					target[key] = value
@@ -16,23 +19,23 @@ const riotStx = {
 				return true
 			}
 		})
-		//Init global state with initStateObjs
+		// Init global state with initStateObjs
 		initStateObjs.forEach(stateToSet => {
 			me.deepExtendState(stateToSet)
-			//state = Object.assign(state, arg)
+			// this.state = Object.assign(state, arg)
 		})
-		riot.install(function (component) {
+		install(function (component) {
 			me.riotPluginState(component)
 		})
 	},
 
-	riotPluginState(component){
+	riotPluginState(component) {
 		let me=this
-		//store the original call if exists
+		// store the original call if exists
 		const { onBeforeMount, onMounted, onBeforeUpdate, onUpdated, onBeforeUnmount, onUnmounted } = component
 
-		//updateState triggered when global state change
-		component.updateState = function (ev){
+		// updateState triggered when global state change
+		component.updateState = function (ev) {
 			component.stx[ev.detail.key]=ev.detail.value
 			component.update()
 		}
@@ -47,10 +50,10 @@ const riotStx = {
 			}
 		})
 
-		//set initial component state with global state if defined
+		// set initial component state with global state if defined
 		component.onBeforeMount = function (...args) {
 			for (let [key, value] of Object.entries(component.stx)) if(key[0] != '_') {
-				//set initial  component state with global state if defined
+				// set initial  component state with global state if defined
 				if(typeof state[key] !== 'undefined') {
 					component.stx[key]=state[key]
 				} else if(me.useStxLocal) state[key]=component.stx[key]
@@ -70,28 +73,28 @@ const riotStx = {
 				onUnmounted.apply(this, args)
 			}
 		}
-		component.setState = function (stateToSet){
+		component.setState = function (stateToSet) {
 			me.setState(stateToSet)
 		}
-		component.setOneState = function (stateToSet){
+		component.setOneState = function (stateToSet) {
 			me.setState(stateToSet)
 		}
 	},
 	
-	setOneState(key,value){
+	setOneState(key,value) {
 		state[key]=value
 	},	
 	
-	setState(stateToSet){
+	setState(stateToSet) {
 		this.deepExtendState(stateToSet)
 	},
 
-	subscribeState(key,callback){
+	subscribeState(key,callback) {
 		window.addEventListener('state_' + key, (ev=>{callback(ev.detail)}))
 	},
 
 	deepExtendState(ext) {
-		Object.assign(state,ext)
+		Object.assign(this.state, ext)
 	}
 }
 export default riotStx
